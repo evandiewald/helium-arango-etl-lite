@@ -121,7 +121,7 @@ class Follower(object):
         payment_documents = []
         receipt_documents = []
         account_documents = []
-        hotspot_documents = []
+        # hotspot_documents = []
         _t = time.time()
 
 
@@ -160,7 +160,7 @@ class Follower(object):
                     payment_documents.append(payment_document)
             elif txn.type == "poc_receipts_v1":
                 transaction: PocReceiptsV1 = self.client.transaction_get(txn.hash, txn.type)
-                hotspot_documents.append({"_key": transaction.path[0].challengee})
+                # hotspot_documents.append({"_key": transaction.path[0].challengee})
                 for witness in transaction.path[0].witnesses:
                     receipt_document = {
                         "_from": "hotspots/" + transaction.path[0].challengee,
@@ -175,7 +175,7 @@ class Follower(object):
                         "hash": txn.hash,
                         "block": block.height
                     }
-                    hotspot_documents.append({"_key": witness.gateway})
+                    # hotspot_documents.append({"_key": witness.gateway})
                     receipt_key = get_hash_of_dict(receipt_document)
                     receipt_document["_key"] = receipt_key
                     receipt_documents.append(receipt_document)
@@ -183,7 +183,7 @@ class Follower(object):
         self.payments.importBulk(payment_documents, onDuplicate="ignore")
         self.accounts.importBulk(account_documents, onDuplicate="ignore")
         self.poc_receipts.importBulk(receipt_documents, onDuplicate="ignore")
-        self.hotspots.importBulk(hotspot_documents, onDuplicate="ignore")
+        # self.hotspots.importBulk(hotspot_documents, onDuplicate="ignore")
 
 
     @staticmethod
