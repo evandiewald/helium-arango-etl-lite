@@ -1,0 +1,13 @@
+certifi==2021.10.8
+charset-normalizer==2.0.10
+DateTime==4.3
+future==0.18.2
+idna==3.3
+pyArango==2.0.1
+pydantic==1.9.0
+python-dotenv==0.19.2
+pytz==2021.3
+requests==2.27.1
+typing_extensions==4.0.1
+urllib3==1.26.8
+zope.interface==5.4.0
