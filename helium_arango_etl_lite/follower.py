@@ -1,5 +1,3 @@
-import math
-
 from models.block import *
 from models.transactions.poc_receipts_v1 import *
 from models.transactions.payment_v2 import *
@@ -13,7 +11,6 @@ from pyArango.theExceptions import CreationError, DocumentNotFoundError
 import time
 import hashlib
 import json
-from multiprocessing import Pool, cpu_count, Process, Manager
 
 
 class Follower(object):
@@ -43,36 +40,21 @@ class Follower(object):
         self.get_first_block()
         self.update_follower_info()
 
-        # n_processes = 8
-        # manager = Manager()
+        if self.settings.gateway_inventory_bootstrap:
+            try:
+                with open(self.settings.gateway_inventory_path, "r") as f:
+                    gateway_inventory = json.load(f)
+                print(f"Gateway inventory successfully loaded from {self.settings.gateway_inventory_path}. Attempting import to hotspots collection")
+                self.hotspots.importBulk(gateway_inventory, onDuplicate="replace")
+                print("Gateway inventory imported successfully")
+            except:
+                raise Exception("Error retrieving or uploading gateway inventory data. Check GATEWAY_INVENTORY_PATH environment variable.")
 
         print(f"Blockchain follower starting from block {self.sync_height} / {self.height}")
 
         while True:
             t = time.time()
 
-            # block = self.client.block_get(self.sync_height, None)
-            # chunk_size = math.ceil(len(block.transactions) / n_processes)
-            #
-            # output_dict = manager.dict()
-            # processes = []
-            # for i in range(n_processes):
-            #     start_idx = i*chunk_size
-            #     end_idx = min(((i+1)*chunk_size, len(block.transactions)))
-            #     txns = block.transactions[start_idx:end_idx]
-            #     p = Process(target=self.process_block_parallel, args=(txns, block.height, block.time, self.settings, output_dict, i))
-            #     p.start()
-            #     processes.append(p)
-            # for i, p in enumerate(processes):
-            #     p.join()
-            #
-            #     self.payments.importBulk(output_dict[i]["payment_documents"], onDuplicate="ignore")
-            #     self.poc_receipts.importBulk(output_dict[i]["receipt_documents"], onDuplicate="ignore")
-            #     self.accounts.importBulk(output_dict[i]["account_documents"], onDuplicate="ignore")
-            #     self.hotspots.importBulk(output_dict[i]["hotspot_documents"], onDuplicate="ignore")
-            #     p.close()
-            #
-            #
             self.process_block(self.sync_height)
             self.sync_height += 1
 
