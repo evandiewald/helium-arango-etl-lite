@@ -1,5 +1,6 @@
 from dotenv import load_dotenv
 import os
+from distutils.util import strtobool
 
 
 class Settings(object):
@@ -10,7 +11,7 @@ class Settings(object):
         self._arango_username = os.getenv('ARANGO_USERNAME')
         self._arango_password = '*****'
         self._arango_database = os.getenv('ARANGO_DATABASE')
-        self._gateway_inventory_bootstrap = bool(os.getenv('GATEWAY_INVENTORY_BOOTSTRAP'))
+        self._gateway_inventory_bootstrap: bool = strtobool(os.getenv('GATEWAY_INVENTORY_BOOTSTRAP'))
         self._gateway_inventory_path = os.getenv('GATEWAY_INVENTORY_PATH')
         self._block_inventory_size = os.getenv('BLOCK_INVENTORY_SIZE')
         self._logs_path = os.getenv('LOGS_PATH')
