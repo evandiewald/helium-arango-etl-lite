@@ -175,6 +175,10 @@ class Follower(object):
                         "hash": txn.hash,
                         "block": block.height
                     }
+                    try:
+                        receipt_document["tx_power"] = transaction.path[0].receipt.tx_power
+                    except AttributeError: # some receipts don't have receipt field
+                        pass
                     # hotspot_documents.append({"_key": witness.gateway})
                     receipt_key = get_hash_of_dict(receipt_document)
                     receipt_document["_key"] = receipt_key
