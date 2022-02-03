@@ -177,7 +177,7 @@ class Follower(object):
                     }
                     try:
                         receipt_document["tx_power"] = transaction.path[0].receipt.tx_power
-                        receipt_document["processing_time_s"] = (transaction.path[0].receipt.timestamp - witness.timestamp) / 1e9
+                        receipt_document["processing_time_s"] = (witness.timestamp - transaction.path[0].receipt.timestamp) / 1e9
                     except AttributeError: # some receipts don't have "receipt" field
                         pass
                     # hotspot_documents.append({"_key": witness.gateway})
