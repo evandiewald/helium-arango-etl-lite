@@ -91,7 +91,7 @@ class Follower(object):
             self.sync_height = follower_info["sync_height"]
             print(f"first_block height found from database: {self.first_block}")
         except DocumentNotFoundError:
-            h = 1156260 #self.height
+            h = self.height
             while True:
                 if h < (self.height - self.settings.block_inventory_size) or self.client.block_get(h, None) is None:
                     self.first_block = h + 1
