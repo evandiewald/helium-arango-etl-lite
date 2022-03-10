@@ -3,6 +3,7 @@ from models.transactions.poc_receipts_v1 import *
 from models.transactions.payment_v2 import *
 from models.transactions.payment_v1 import *
 from client import BlockchainNodeClient
+from loaders import process_gateway_inventory
 from pyArango.connection import Connection
 from pyArango.database import Database
 from pyArango.collection import Collection, Edges
@@ -42,6 +43,7 @@ class Follower(object):
 
         if self.settings.gateway_inventory_bootstrap:
             try:
+                process_gateway_inventory(self.settings)
                 with open(self.settings.gateway_inventory_path, "r") as f:
                     gateway_inventory = json.load(f)
                 print(f"Gateway inventory successfully loaded from {self.settings.gateway_inventory_path}. Attempting import to hotspots collection")
@@ -184,6 +186,8 @@ class Follower(object):
                     receipt_key = get_hash_of_dict(receipt_document)
                     receipt_document["_key"] = receipt_key
                     receipt_documents.append(receipt_document)
+            # elif txn.type == "add_gateway_v1":
+
 
         self.payments.importBulk(payment_documents, onDuplicate="ignore")
         self.accounts.importBulk(account_documents, onDuplicate="ignore")

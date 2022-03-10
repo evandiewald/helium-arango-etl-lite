@@ -15,6 +15,7 @@ class Settings(object):
         self._gateway_inventory_path = os.getenv('GATEWAY_INVENTORY_PATH')
         self._block_inventory_size = os.getenv('BLOCK_INVENTORY_SIZE')
         self._logs_path = os.getenv('LOGS_PATH')
+        self._latest_inventories_url = os.getenv('LATEST_INVENTORIES_URL')
 
     @property
     def node_address(self):
@@ -51,3 +52,7 @@ class Settings(object):
     @property
     def logs_path(self):
         return os.getenv('LOGS_PATH')
+
+    @property
+    def latest_inventories_url(self):
+        return self._latest_inventories_url
