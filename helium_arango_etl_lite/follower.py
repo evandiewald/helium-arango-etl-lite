@@ -7,11 +7,14 @@ from loaders import process_gateway_inventory
 from pyArango.connection import Connection
 from pyArango.database import Database
 from pyArango.collection import Collection, Edges
+from pyArango.document import Document
 from settings import Settings
-from pyArango.theExceptions import CreationError, DocumentNotFoundError
+from pyArango.theExceptions import CreationError, DocumentNotFoundError, UpdateError
 import time
 import hashlib
 import json
+import os
+from pydantic.error_wrappers import ValidationError
 
 
 class Follower(object):
@@ -42,22 +45,34 @@ class Follower(object):
         self.update_follower_info()
 
         if self.settings.gateway_inventory_bootstrap:
-            try:
-                process_gateway_inventory(self.settings)
-                with open(self.settings.gateway_inventory_path, "r") as f:
-                    gateway_inventory = json.load(f)
-                print(f"Gateway inventory successfully loaded from {self.settings.gateway_inventory_path}. Attempting import to hotspots collection")
-                self.hotspots.importBulk(gateway_inventory, onDuplicate="replace")
-                print("Gateway inventory imported successfully")
-            except:
-                raise Exception("Error retrieving or uploading gateway inventory data. Check GATEWAY_INVENTORY_PATH environment variable.")
+
+            gateway_inventory = process_gateway_inventory(self.settings)
+
+            skipped = []
+
+            for hotspot in gateway_inventory:
+                try:
+                    self.hotspots.createDocument(hotspot).save(overwriteMode="replace")
+                except UpdateError:
+                    skipped.append(hotspot)
+                    print(f"skipping {hotspot}")
+            self.hotspots.importBulk(skipped)
+            print("Gateway inventory imported successfully")
 
         print(f"Blockchain follower starting from block {self.sync_height} / {self.height}")
 
         while True:
             t = time.time()
 
-            self.process_block(self.sync_height)
+            retry = 0
+            while retry < 50:
+                try:
+                    self.process_block(self.sync_height)
+                    break
+                except (ValidationError, AttributeError):
+                    print("couldn't find transaction...retrying")
+                    time.sleep(10)
+                    retry += 1
             self.sync_height += 1
 
             print(f"Block {self.sync_height - 1} synced in {time.time() - t} seconds...")
@@ -104,7 +119,6 @@ class Follower(object):
                     if h % 100 == 0:
                         print(f"...still finding blocks, at {h} / {self.height}")
 
-
     def update_follower_info(self):
         if not self.first_block:
             self.get_first_block()
@@ -126,8 +140,8 @@ class Follower(object):
         # hotspot_documents = []
         _t = time.time()
 
-
         for txn in block.transactions:
+
             if txn.type == "payment_v1":
                 transaction: PaymentV1 = self.client.transaction_get(txn.hash, txn.type)
                 account_documents.append({"_key": transaction.payer})
@@ -180,23 +194,22 @@ class Follower(object):
                     try:
                         receipt_document["tx_power"] = transaction.path[0].receipt.tx_power
                         receipt_document["processing_time_s"] = (witness.timestamp - transaction.path[0].receipt.timestamp) / 1e9
-                    except AttributeError: # some receipts don't have "receipt" field
+                    except AttributeError:  # some receipts don't have "receipt" field
                         pass
                     # hotspot_documents.append({"_key": witness.gateway})
                     receipt_key = get_hash_of_dict(receipt_document)
                     receipt_document["_key"] = receipt_key
                     receipt_documents.append(receipt_document)
-            # elif txn.type == "add_gateway_v1":
-
+                    # elif txn.type == "add_gateway_v1":
 
         self.payments.importBulk(payment_documents, onDuplicate="ignore")
         self.accounts.importBulk(account_documents, onDuplicate="ignore")
         self.poc_receipts.importBulk(receipt_documents, onDuplicate="ignore")
         # self.hotspots.importBulk(hotspot_documents, onDuplicate="ignore")
 
-
     @staticmethod
-    def process_block_parallel(transactions: List[BlockTransaction], block_height: int, block_time: int, settings: Settings, output_dict: dict, i: int):
+    def process_block_parallel(transactions: List[BlockTransaction], block_height: int, block_time: int, settings: Settings, output_dict: dict,
+                               i: int):
         payment_documents = []
         receipt_documents = []
         account_documents = []
@@ -269,7 +282,6 @@ class Follower(object):
         output_dict[i] = output
         return output_dict
         # return payment_documents, receipt_documents, account_documents, hotspot_documents
-
 
 
 def get_hash_of_dict(d: dict) -> str:

@@ -17,7 +17,6 @@ def geo_index(h):
 
 
 def process_gateway_inventory(settings: Settings):
-
     gz_path = Path("gateway_inventory_latest.csv.gz")
     csv_path = Path("gateway_inventory_latest.csv")
 
@@ -37,10 +36,19 @@ def process_gateway_inventory(settings: Settings):
     data["_key"] = key
     data["location_geo"] = location_geo
 
+    data = data.drop(["Unnamed: 0"], axis=1)
+
+    data = data.dropna()
+
     records = data.to_dict("records")
 
-    with open(settings.gateway_inventory_path, "w") as f:
-        json.dump(records, f)
+    # with open(settings.gateway_inventory_path, "w") as f:
+    #    json.dump(records, f)
 
-    os.remove(gz_path)
-    os.remove(csv_path)
+    try:
+        os.remove(gz_path)
+        os.remove(csv_path)
+    except FileNotFoundError:
+        pass
+
+    return records

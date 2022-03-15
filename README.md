@@ -18,6 +18,6 @@ http://{HOST_ADDRESS}:8529
 
 * Run the ETL
 
-`python3 helium_arango_etl_lite/etl.py`
+`cd helium_arango_etl_lite && python3 etl.py`
 
 After backfilling all blocks stored on the node, the service should listen for new blocks and process them as they come in. 
