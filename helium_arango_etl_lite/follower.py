@@ -55,7 +55,6 @@ class Follower(object):
                     self.hotspots.createDocument(hotspot).save(overwriteMode="replace")
                 except UpdateError:
                     skipped.append(hotspot)
-                    print(f"skipping {hotspot}")
             self.hotspots.importBulk(skipped)
             print("Gateway inventory imported successfully")
 
