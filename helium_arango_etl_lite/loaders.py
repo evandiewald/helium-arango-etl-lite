@@ -51,6 +51,6 @@ def process_gateway_inventory(settings: Settings):
     except FileNotFoundError:
         pass
 
-    inventory_height = int(parse.parse("gateway_inventory_{0}.csv.gz", g.split("/")[-1])[0])
+    inventory_height = int(parse.parse("gateway_inventory_{0}.csv.gz", inventories["gateway_inventory"].split("/")[-1])[0])
 
     return records, inventory_height
