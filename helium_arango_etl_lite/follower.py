@@ -47,15 +47,17 @@ class Follower(object):
         if self.settings.gateway_inventory_bootstrap:
 
             gateway_inventory = process_gateway_inventory(self.settings)
+            
+            self.hotspots.importBulk(gateway_inventory)
+            #skipped = []
 
-            skipped = []
-
-            for hotspot in gateway_inventory:
-                try:
-                    self.hotspots.createDocument(hotspot).save(overwriteMode="replace")
-                except UpdateError:
-                    skipped.append(hotspot)
-            self.hotspots.importBulk(skipped)
+            #for hotspot in gateway_inventory:
+            #    try:
+            #        self.hotspots.createDocument(hotspot).save(overwriteMode="replace")
+            #    except UpdateError:
+            #        skipped.append(hotspot)
+            #        print(f"skipping {hotspot}")
+            #self.hotspots.importBulk(skipped)
             print("Gateway inventory imported successfully")
 
         print(f"Blockchain follower starting from block {self.sync_height} / {self.height}")
