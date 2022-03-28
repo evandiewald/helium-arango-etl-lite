@@ -60,7 +60,7 @@ class Follower(object):
                     if self.sync_height - self.inventory_height > 500:
                         self.update_gateway_inventory()
                     self.process_block(self.sync_height)
-                    self.delete_old_receipts()
+                    # self.delete_old_receipts() # deletions not optimized yet
                     break
                 except (ValidationError, AttributeError):
                     print("couldn't find transaction...retrying")
@@ -209,7 +209,7 @@ class Follower(object):
     def delete_old_receipts(self):
         aql = f"""for receipt in poc_receipts
                     filter receipt.block < {self.sync_height - self.settings.block_inventory_size}
-                    remove receipt"""
+                    remove receipt in poc_receipts"""
         self.database.AQLQuery(aql)
 
     @staticmethod
