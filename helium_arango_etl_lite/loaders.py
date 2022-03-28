@@ -3,7 +3,7 @@ import os
 import h3
 from pathlib import Path
 import pandas as pd
-import json
+import parse
 from settings import Settings
 
 
@@ -51,4 +51,6 @@ def process_gateway_inventory(settings: Settings):
     except FileNotFoundError:
         pass
 
-    return records
+    inventory_height = int(parse.parse("gateway_inventory_{0}.csv.gz", g.split("/")[-1])[0])
+
+    return records, inventory_height

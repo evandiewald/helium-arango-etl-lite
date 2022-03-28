@@ -38,6 +38,7 @@ class Follower(object):
         self.height = self.client.height
         self.first_block: Optional[int] = None
         self.sync_height: Optional[int] = None
+        self.inventory_height: Optional[int] = None
 
     def run(self):
         self.init_database()
@@ -45,19 +46,7 @@ class Follower(object):
         self.update_follower_info()
 
         if self.settings.gateway_inventory_bootstrap:
-
-            gateway_inventory = process_gateway_inventory(self.settings)
-            
-            self.hotspots.importBulk(gateway_inventory)
-            #skipped = []
-
-            #for hotspot in gateway_inventory:
-            #    try:
-            #        self.hotspots.createDocument(hotspot).save(overwriteMode="replace")
-            #    except UpdateError:
-            #        skipped.append(hotspot)
-            #        print(f"skipping {hotspot}")
-            #self.hotspots.importBulk(skipped)
+            self.update_gateway_inventory()
             print("Gateway inventory imported successfully")
 
         print(f"Blockchain follower starting from block {self.sync_height} / {self.height}")
@@ -68,7 +57,10 @@ class Follower(object):
             retry = 0
             while retry < 50:
                 try:
+                    if self.sync_height - self.inventory_height > 500:
+                        self.update_gateway_inventory()
                     self.process_block(self.sync_height)
+                    self.delete_old_receipts()
                     break
                 except (ValidationError, AttributeError):
                     print("couldn't find transaction...retrying")
@@ -129,9 +121,15 @@ class Follower(object):
             "_key": "follower_info",
             "height": self.height,
             "first_block": self.first_block,
-            "sync_height": self.sync_height
+            "sync_height": self.sync_height,
+            "inventory_height": self.inventory_height
         }
         self.follower_info.createDocument(follower_info).save(overwriteMode="replace")
+
+    def update_gateway_inventory(self):
+        gateway_inventory, inventory_height = process_gateway_inventory(self.settings)
+        self.hotspots.importBulk(gateway_inventory)
+        self.inventory_height = inventory_height
 
     def process_block(self, height: int):
         block = self.client.block_get(height, None)
@@ -207,6 +205,12 @@ class Follower(object):
         self.accounts.importBulk(account_documents, onDuplicate="ignore")
         self.poc_receipts.importBulk(receipt_documents, onDuplicate="ignore")
         # self.hotspots.importBulk(hotspot_documents, onDuplicate="ignore")
+
+    def delete_old_receipts(self):
+        aql = f"""for receipt in poc_receipts
+                    filter receipt.block < {self.sync_height - self.settings.block_inventory_size}
+                    remove receipt"""
+        self.database.AQLQuery(aql)
 
     @staticmethod
     def process_block_parallel(transactions: List[BlockTransaction], block_height: int, block_time: int, settings: Settings, output_dict: dict,
