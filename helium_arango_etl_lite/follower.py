@@ -174,8 +174,8 @@ class Follower(object):
                     payment_key = get_hash_of_dict(payment_document)
                     payment_document["_key"] = payment_key
                     payment_documents.append(payment_document)
-            elif txn.type == "poc_receipts_v1":
-                transaction: PocReceiptsV1 = self.client.transaction_get(txn.hash, txn.type)
+            elif txn.type in ["poc_receipts_v1", "poc_receipts_v2"]:
+                transaction: Union[PocReceiptsV1, PocReceiptsV2] = self.client.transaction_get(txn.hash, txn.type)
                 # hotspot_documents.append({"_key": transaction.path[0].challengee})
                 for witness in transaction.path[0].witnesses:
                     receipt_document = {
