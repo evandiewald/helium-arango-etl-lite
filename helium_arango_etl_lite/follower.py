@@ -1,5 +1,6 @@
 from models.block import *
 from models.transactions.poc_receipts_v1 import *
+from models.transactions.poc_receipts_v2 import *
 from models.transactions.payment_v2 import *
 from models.transactions.payment_v1 import *
 from client import BlockchainNodeClient
@@ -13,7 +14,7 @@ from pyArango.theExceptions import CreationError, DocumentNotFoundError, UpdateE
 import time
 import hashlib
 import json
-import os
+from typing import Union
 from pydantic.error_wrappers import ValidationError
 
 
@@ -255,8 +256,8 @@ class Follower(object):
                     payment_key = get_hash_of_dict(payment_document)
                     payment_document["_key"] = payment_key
                     payment_documents.append(payment_document)
-            elif txn.type == "poc_receipts_v1":
-                transaction: PocReceiptsV1 = client.transaction_get(txn.hash, txn.type)
+            elif txn.type in ["poc_receipts_v1", "poc_receipts_v2"]:
+                transaction: Union[PocReceiptsV1, PocReceiptsV2] = client.transaction_get(txn.hash, txn.type)
                 hotspot_documents.append({"_key": transaction.path[0].challengee})
                 for witness in transaction.path[0].witnesses:
                     receipt_document = {
