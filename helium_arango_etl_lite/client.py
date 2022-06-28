@@ -7,6 +7,7 @@ from models.block import Block
 from models.transactions.payment_v1 import PaymentV1
 from models.transactions.payment_v2 import PaymentV2
 from models.transactions.poc_receipts_v1 import PocReceiptsV1
+from models.transactions.poc_receipts_v2 import PocReceiptsV2
 
 
 class BlockchainNodeClient(object):
@@ -44,6 +45,8 @@ class BlockchainNodeClient(object):
             return PaymentV2.parse_obj(response)
         elif type == "poc_receipts_v1":
             return PocReceiptsV1.parse_obj(response)
+        elif type == "poc_receipts_v2":
+            return PocReceiptsV2.parse_obj(response)
         else:
             raise Exception(f"Unexpected transaction type: {type}")
 
