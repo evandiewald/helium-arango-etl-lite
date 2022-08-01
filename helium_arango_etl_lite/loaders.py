@@ -23,11 +23,7 @@ def process_gateway_inventory(settings: Settings):
     url = settings.latest_inventories_url
     inventories = requests.get(url).json()
 
-    inventory_raw = requests.get(inventories["gateway_inventory"]).content
-    with open(gz_path, "wb") as f:
-        f.write(inventory_raw)
-
-    data = pd.read_csv(gz_path, compression="gzip")
+    data = pd.read_csv(inventories["gateway_inventory"])
     id = data.address.map("hotspots/{}".format)
     key = data.address
     location_geo = data.location.map(geo_index)
@@ -36,14 +32,9 @@ def process_gateway_inventory(settings: Settings):
     data["_key"] = key
     data["location_geo"] = location_geo
 
-    data = data.drop(["Unnamed: 0"], axis=1)
-
     data = data.dropna()
 
     records = data.to_dict("records")
-
-    # with open(settings.gateway_inventory_path, "w") as f:
-    #    json.dump(records, f)
 
     try:
         os.remove(gz_path)
